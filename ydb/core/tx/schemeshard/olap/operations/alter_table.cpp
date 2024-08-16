@@ -291,6 +291,9 @@ public:
             }
         }
 
+        LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                "TAlterColumnTable Propose 2");
+
         TProposeErrorCollector errors(*result);
         TEntityInitializationContext iContext(&context);
         std::shared_ptr<ISSEntity> originalEntity = ISSEntity::GetEntityVerified(context, path);
@@ -306,15 +309,24 @@ public:
             update = conclusion.DetachResult();
         }
 
+        LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+            "TAlterColumnTable Propose 3");
+
         TString errStr;
         if (!context.SS->CheckApplyIf(Transaction, errStr)) {
             result->SetError(NKikimrScheme::StatusPreconditionFailed, errStr);
             return result;
         }
 
+        LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+            "TAlterColumnTable Propose 4");
+
         NIceDb::TNiceDb db(context.GetDB());
 
         if (update->GetShardIds().size()) {
+
+            LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                "TAlterColumnTable Propose 5");
             TTxState& txState = context.SS->CreateTx(OperationId, TTxState::TxAlterColumnTable, path->PathId);
             txState.State = TTxState::ConfigureParts;
 
@@ -337,6 +349,8 @@ public:
                 TUpdateStartContext startContext(&path, &context, &db);
                 auto status = update->Start(startContext);
                 if (status.IsFail()) {
+                    LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                        "TAlterColumnTable Propose 6");
                     errors.AddError(status.GetErrorMessage());
                     return result;
                 }
@@ -345,13 +359,21 @@ public:
 
             context.OnComplete.ActivateTx(OperationId);
 
+            LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                "TAlterColumnTable Propose 7");
+
             SetState(NextState());
         } else {
+            LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                "TAlterColumnTable Propose 8");
+
             {
                 {
                     TUpdateStartContext startContext(&path, &context, &db);
                     auto status = update->Start(startContext);
                     if (status.IsFail()) {
+                        LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                            "TAlterColumnTable Propose 9");
                         errors.AddError(status.GetErrorMessage());
                         return result;
                     }
@@ -360,11 +382,17 @@ public:
                     TUpdateFinishContext fContext(&path, &context, &db, {});
                     auto status = update->Finish(fContext);
                     if (status.IsFail()) {
+
+                        LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                            "TAlterColumnTable Propose 10");
                         errors.AddError(status.GetErrorMessage());
                         return result;
                     }
                 }
             }
+
+            LOG_NOTICE_S(context.Ctx, NKikimrServices::FLAT_TX_SCHEMESHARD,
+                "TAlterColumnTable Propose 11 " << path->PathState);
             result->SetStatus(NKikimrScheme::StatusSuccess);
             SetState(TTxState::Done);
         }

@@ -187,6 +187,37 @@ class AddColumn(AlterTableAction):
         return f'add column `{self._column.name}`'
 
 
+class AlterSharding(AlterTableAction):
+    """Change shards count for tablestore.
+
+    Table-like objects are Tables and TableStore.
+    See {AlterTableLikeObject}.
+
+    Example:
+        sth = ScenarioTestHelper(ctx)
+        sth.execute_scheme_query(
+            AlterTable('testTable')
+                .action(AlterSharding("SPLIT"))
+        )
+    """
+
+    def __init__(self, modification) -> None:
+        """Constructor.
+
+        Args:
+            column: Column description."""
+
+        super().__init__()
+        self._modification = modification
+
+    @override
+    def to_yql(self) -> str:
+        return f'SET(ACTION=ALTER_SHARDING, MODIFICATION={self._modification})'
+
+    @override
+    def title(self) -> str:
+        return self.to_yql()
+
 class DropColumn(AlterTableAction):
     """Remove a column from a table-like object.
 
@@ -327,3 +358,43 @@ class AlterTableStore(AlterTableLikeObject):
     @override
     def _type(self) -> str:
         return 'tablestore'
+    
+class AlterObject(ScenarioTestHelper.IYqlble):
+    def __init__(self, name: str) -> None:
+        """Constructor.
+
+        Args:
+            name: Name (relative path) of the altered object."""
+
+        super().__init__(name)
+        self._actions = []
+
+    @override
+    def params(self) -> Dict[str, str]:
+        return {self._type(): self._name, 'actions': ', '.join([a.title() for a in self._actions])}
+
+    @override
+    def title(self):
+        return f'alter object (TYPE TABLESTORE)'
+
+    @override
+    def to_yql(self, ctx: TestContext) -> str:
+        actions = ', '.join([a.to_yql() for a in self._actions])
+        return f'ALTER OBJECT `{ScenarioTestHelper(ctx).get_full_path(self._name)}` (TYPE TABLESTORE) {actions}'
+    
+    def action(self, action: AlterTableAction) -> AlterTableLikeObject:
+        """Add an action with an object.
+
+         Args:
+            action: Action on the object, such as creating or deleting a column.
+
+        Returns:
+            self."""
+
+        self._actions.append(action)
+        return self
+    
+    @override
+    def _type(self) -> str:
+        return 'tablestore'
+    

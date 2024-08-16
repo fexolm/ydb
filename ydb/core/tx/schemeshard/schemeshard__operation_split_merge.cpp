@@ -416,6 +416,9 @@ public:
 
         context.SS->DeleteSplitOp(OperationId, *txState);
 
+        const auto& pathId = txState->TargetPathId;
+        context.OnComplete.ReleasePathState(OperationId, pathId, TPathElement::EPathState::EPathStateNoChanges);
+
         context.OnComplete.DoneOperation(OperationId);
         return true;
     }

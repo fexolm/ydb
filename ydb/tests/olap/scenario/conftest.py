@@ -19,12 +19,14 @@ class BaseTestSet:
 
     @classmethod
     def setup_class(cls):
-        ScenarioTestHelper(None).remove_path(cls.get_suite_name())
+        pass
+        # ScenarioTestHelper(None).remove_path(cls.get_suite_name())
 
     @classmethod
     def teardown_class(cls):
-        if not external_param_is_true('keep-tables'):
-            ScenarioTestHelper(None).remove_path(cls.get_suite_name())
+        pass
+        # if not external_param_is_true('keep-tables'):
+            # ScenarioTestHelper(None).remove_path(cls.get_suite_name())
 
     def test(self, ctx: TestContext):
         allure_test_description(ctx.suite, ctx.test)

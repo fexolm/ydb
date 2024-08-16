@@ -5,6 +5,7 @@ namespace NKikimr::NOlap::NBackground {
 
 bool TTxAddSession::Execute(TTransactionContext& txc, const TActorContext& /*ctx*/) {
     Adapter->SaveSessionToLocalDatabase(txc, Session->SerializeToLocalDatabaseRecord());
+    AFL_NOTICE(NKikimrServices::FLAT_TX_SCHEMESHARD)("TTxAddSession::Execute", "");
     return true;
 }
 
